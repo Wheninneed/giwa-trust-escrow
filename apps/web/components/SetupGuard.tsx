@@ -45,8 +45,8 @@ export function SetupGuard({ children, requireWallet = true }: { children: React
           <WalletButton />
         </div>
         <p className="hint" style={{ maxWidth: 420, margin: "0 auto" }}>
-          지갑이 없으신가요? 크롬·엣지·파이어폭스·브레이브에 메타마스크를 설치하면 됩니다. 휴대폰이라면 메타마스크
-          앱을 열고 <strong>앱 안의 브라우저</strong>로 이 주소를 여세요.
+          메타마스크·OKX월렛·Rabby 등 EVM 지갑이면 무엇이든 됩니다. 휴대폰이라면 지갑 앱을 열고{" "}
+          <strong>앱 안의 브라우저</strong>로 이 주소를 여세요.
         </p>
       </div>
     );
