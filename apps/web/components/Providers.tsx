@@ -12,7 +12,7 @@ export function Providers({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // 온체인 상태가 진실의 원천이므로 화면 복귀 시 다시 읽는다
+            // 화면 값은 전부 온체인에서 읽어오므로, 돌아왔을 때 다시 읽는다
             refetchOnWindowFocus: true,
             staleTime: 4_000,
             retry: 1,
