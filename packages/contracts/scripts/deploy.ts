@@ -7,7 +7,7 @@ import { formatEther } from "viem";
 const here = dirname(fileURLToPath(import.meta.url));
 const sharedRoot = resolve(here, "../../shared/src");
 
-const { viem, networkName, networkConfig } = await network.connect();
+const { viem, networkName } = await network.connect();
 
 const publicClient = await viem.getPublicClient();
 const [deployer] = await viem.getWalletClients();
@@ -46,13 +46,14 @@ const record = {
   deployer: deployer.account.address,
   mockKRW: mockKRW.address,
   escrow: escrow.address,
-  rpcUrl: "url" in networkConfig ? String(networkConfig.url) : undefined,
 };
 
+// 로컬 노드도 같은 chainId 를 쓰므로 네트워크 이름으로 파일을 나눈다.
+// 그래야 로컬 배포가 테스트넷 배포 기록을 덮어쓰지 않는다.
 const target = resolve(
   sharedRoot,
   "deployments",
-  chainId === 91342 ? "giwa-sepolia.json" : `chain-${chainId}.json`,
+  networkName === "giwaSepolia" ? "giwa-sepolia.json" : `${networkName}.json`,
 );
 mkdirSync(dirname(target), { recursive: true });
 writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, "utf8");

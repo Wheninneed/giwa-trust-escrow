@@ -32,6 +32,20 @@ const config: HardhatUserConfig = {
       type: "edr-simulated",
       chainType: "op",
     },
+    // 테스트넷 ETH 없이 프론트엔드를 돌려보기 위한 로컬 노드.
+    // GIWA Sepolia 와 같은 chainId 를 쓰므로 웹 앱은 RPC 주소만 바꾸면 된다.
+    //   npx hardhat node --network localGiwa
+    //   npx hardhat run scripts/deploy.ts --network localhost
+    localGiwa: {
+      type: "edr-simulated",
+      chainType: "op",
+      chainId: 91342,
+    },
+    localhost: {
+      type: "http",
+      chainType: "op",
+      url: "http://127.0.0.1:8545",
+    },
     giwaSepolia: {
       type: "http",
       chainType: "op",

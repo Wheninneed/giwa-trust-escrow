@@ -214,9 +214,14 @@ function Detail({ id }: { id: bigint }) {
                     </div>
 
                     {milestone.isRetention && (
-                      <span className="badge" data-tone="info" style={{ alignSelf: "flex-start" }}>
-                        하자보증금 · {formatDate(milestone.retentionReleaseAt)} 이후 지급
-                      </span>
+                      <div className="row wrap" style={{ gap: 6 }}>
+                        <span className="badge" data-tone="info">
+                          하자보증금
+                        </span>
+                        <span className="muted">
+                          {formatDateTime(milestone.retentionReleaseAt)} 이후 지급
+                        </span>
+                      </div>
                     )}
 
                     {metadata.ev?.[index] && <span className="muted">증빙: {metadata.ev[index]}</span>}

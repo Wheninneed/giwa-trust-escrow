@@ -26,3 +26,6 @@ next-env.d.ts
 Thumbs.db
 .idea/
 .vscode/
+
+# 로컬 노드 배포 기록은 커밋하지 않는다
+packages/shared/src/deployments/localhost.json
