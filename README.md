@@ -136,6 +136,24 @@ giwa-trust-escrow/
 
 업체·중재자 역할까지 보려면 지갑에서 계정을 하나씩 더 만들어 전환하면 됩니다.
 
+### 실제 온체인 기록 (데모 계약 #0)
+
+돈이 실제로 단계별로 움직인 트랜잭션입니다. 모두 GIWA Sepolia 에서 확인할 수 있습니다.
+
+| 동작 | 실행 지갑 | 트랜잭션 |
+|---|---|---|
+| 계약금 5,000만 mKRW 전액 예치 | 고객 | [`0xd02d9824…`](https://sepolia-explorer.giwa.io/tx/0xd02d9824b33d4c6115a19f9d7556b62c32a6b4c585dc180680e578874fa9ea1d) |
+| 1단계 완료 증빙 제출 (파일 해시) | 업체 | [`0x860da42a…`](https://sepolia-explorer.giwa.io/tx/0x860da42abe84a68c85845fd63288c955ae3264dcc84b1fbde848326bd7eb77a1) |
+| 1단계 승인 → 1,000만 mKRW 지급 | 고객 | [`0x9cb2742c…`](https://sepolia-explorer.giwa.io/tx/0x9cb2742c1e1deb73143090c618e4dd68606942393906e38e0d07656ef5785e80) |
+
+승인 트랜잭션 한 건으로 **1,000만 mKRW 만** 업체에게 나가고 나머지 **4,000만 mKRW 는 컨트랙트에 그대로 잠겨** 있습니다. 이것이 이 제품의 핵심 동작입니다.
+
+| 역할 | 주소 |
+|---|---|
+| 고객 | `0x03F317229ab926fAd80B5C4f0a683999cD043dbd` |
+| 업체 | `0xe266A82DF10EC793c275D630973bE32aACD81fD6` |
+| 중재자 | `0x5f67FD8Bd30D7110CC49EDD17C66CeBb310CAaDD` |
+
 ---
 
 ## 7. 로컬 실행
