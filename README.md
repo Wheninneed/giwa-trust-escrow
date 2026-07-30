@@ -54,18 +54,38 @@
 
 ## 4. 아키텍처
 
+```mermaid
+flowchart TB
+    subgraph browser["브라우저"]
+        wallet["지갑 (MetaMask 등)<br/>모든 트랜잭션을 사용자가 직접 서명"]
+        web["Next.js App Router<br/>wagmi · viem"]
+        crypto["Web Crypto<br/>증빙 파일 SHA-256 계산<br/>원본은 업로드하지 않음"]
+        web --- crypto
+        web --- wallet
+    end
+
+    subgraph chain["GIWA Sepolia · chainId 91342"]
+        escrow["GiwaMilestoneEscrow<br/>계약 · 단계 · 분쟁 · 변경계약 · 하자보증금"]
+        token["MockKRW<br/>테스트용 ERC-20"]
+        escrow -- "safeTransfer" --> token
+    end
+
+    shared["shared 패키지<br/>체인 설정 · 상태 라벨 · 금액 포맷 · 오류 한국어 변환"]
+    contracts["contracts 패키지<br/>Solidity · Hardhat · 테스트 70개"]
+
+    wallet -- "서명된 트랜잭션" --> escrow
+    web -- "조회 함수 · 이벤트 (읽기)" --> escrow
+    shared -.-> web
+    contracts -- "ABI 자동 생성" --> shared
+
+    style chain fill:#eaf1fd,stroke:#1b64da
+    style browser fill:#f7f8fa,stroke:#d1d6db
 ```
-사용자 지갑 (MetaMask 등)
-   │  모든 계약 트랜잭션을 사용자가 직접 서명
-   ▼
-Next.js (App Router) ──── wagmi / viem ────▶ GIWA Sepolia
-   │                                            │
-   │ 파일 SHA-256 은 브라우저 Web Crypto 로 계산   │
-   │ (원본 파일은 어디에도 업로드하지 않음)         │
-   │                                            ├── MockKRW (테스트용 ERC-20)
-   └── shared 패키지 ◀── ABI 자동 생성 ──────────┴── GiwaMilestoneEscrow
-        체인 설정 · 상태 라벨 · 금액 포맷 · 오류 한국어 변환
-```
+
+**온체인이 진실의 원천입니다.** 서버·데이터베이스·인덱서가 없습니다. 화면은 컨트랙트 조회 함수와 이벤트만으로 구성됩니다.
+
+- 표시용 메타데이터(계약명·단계명)는 온체인 `metadataURI` 에 JSON 으로 담고, 무결성 확인용 해시를 함께 기록합니다.
+- 사람이 읽는 설명문(승인 메모·보완 사유·분쟁 사유)은 상태에 저장하지 않고 `MilestoneNote` **이벤트 로그에만** 남겨 저장 비용과 노출 범위를 줄입니다.
 
 **온체인이 진실의 원천입니다.** 별도 백엔드나 인덱서 없이 컨트랙트 조회 함수와 이벤트만으로 모든 화면을 구성합니다.
 
