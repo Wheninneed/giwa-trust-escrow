@@ -69,6 +69,14 @@ const config: HardhatUserConfig = {
     blockscout: {
       enabled: true,
     },
+    // GIWA(91342)는 Sourcify·Etherscan 어느 쪽에도 등록되어 있지 않다.
+    // 검증은 GIWA 공식 Blockscout 익스플로러로만 한다.
+    sourcify: {
+      enabled: false,
+    },
+    etherscan: {
+      enabled: false,
+    },
   },
 };
 

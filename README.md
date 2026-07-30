@@ -93,17 +93,20 @@ giwa-trust-escrow/
 
 ## 5. 스마트컨트랙트 주소
 
-| 컨트랙트 | GIWA Sepolia 주소 |
+**네트워크: GIWA Sepolia (chainId 91342)** · 배포일 2026-07-31 · 두 컨트랙트 모두 **소스 검증 완료**
+
+| 컨트랙트 | 주소 |
 |---|---|
-| `MockKRW` | _배포 후 기입_ |
-| `GiwaMilestoneEscrow` | _배포 후 기입_ |
+| `MockKRW` | [`0x640c78feb045315dd01b21ad9a0536aaac246eec`](https://sepolia-explorer.giwa.io/address/0x640c78feb045315dd01b21ad9a0536aaac246eec#code) |
+| `GiwaMilestoneEscrow` | [`0xcd3e0018aaac2f7fe6b0aede85c1d958184ac64c`](https://sepolia-explorer.giwa.io/address/0xcd3e0018aaac2f7fe6b0aede85c1d958184ac64c#code) |
+
+관리자(`Ownable2Step` owner): `0x03f317229ab926fad80b5c4f0a683999cd043dbd` — `pause`/`unpause` 만 가능하며 예치금을 인출할 수 없습니다.
 
 배포 기록은 `packages/shared/src/deployments/giwa-sepolia.json` 에 자동 저장됩니다.
-탐색기: https://sepolia-explorer.giwa.io
 
 ## 6. 라이브 데모
 
-_배포 후 기입_
+_Vercel 배포 후 기입_
 
 ---
 
@@ -185,9 +188,13 @@ pnpm --filter contracts test
 pnpm deploy:giwa
 ```
 
+소스 검증은 GIWA 공식 Blockscout 익스플로러에 합니다.
+
 ```bash
 npx hardhat verify --network giwaSepolia <컨트랙트주소> <관리자주소>
 ```
+
+> GIWA(91342)는 아직 Sourcify·Etherscan 에 등록되어 있지 않아 두 provider 는 꺼두었습니다.
 
 데모 계약 시딩 (선택):
 
