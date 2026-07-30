@@ -39,6 +39,10 @@ console.log("GiwaMilestoneEscrow 배포 중...");
 const escrow = await viem.deployContract("GiwaMilestoneEscrow", [deployer.account.address]);
 console.log(`  Escrow   : ${escrow.address}`);
 
+// 이벤트 조회 시작점. GIWA 공개 RPC 는 eth_getLogs 를 10만 블록으로 제한하므로
+// "earliest" 부터 훑을 수 없다. 배포 블록을 기록해 여기서부터 읽는다.
+const deployBlock = await publicClient.getBlockNumber();
+
 const record = {
   chainId,
   network: networkName,
@@ -46,6 +50,7 @@ const record = {
   deployer: deployer.account.address,
   mockKRW: mockKRW.address,
   escrow: escrow.address,
+  deployBlock: Number(deployBlock),
 };
 
 // 로컬 노드도 같은 chainId 를 쓰므로 네트워크 이름으로 파일을 나눈다.

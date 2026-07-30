@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { network } from "hardhat";
-import { keccak256, parseUnits, stringToHex } from "viem";
+import { keccak256, parseEventLogs, parseUnits, stringToHex } from "viem";
 
 /**
  * 심사용 데모 계약을 만든다 (명세서 17장).
@@ -69,14 +69,49 @@ console.log(`중재자 : ${arbiter}`);
 const balance = await token.read.balanceOf([client.account.address]);
 if (balance < TOTAL) {
   console.log("고객 잔액이 부족해 faucet 을 호출합니다...");
-  await token.write.faucet({ account: client.account });
+  await send("faucet", token.write.faucet({ account: client.account }));
 }
 
 const now = Math.floor(Date.now() / 1000);
 const DAY = 86_400;
 
-console.log("\n계약을 만드는 중...");
-await escrow.write.createAgreement(
+/**
+ * 실제 네트워크에서는 트랜잭션이 바로 채굴되지 않는다.
+ * 다음 호출이 이전 상태를 읽지 않도록 매번 영수증을 기다린다.
+ */
+async function send(label: string, hashPromise: Promise<`0x${string}`>) {
+  const txHash = await hashPromise;
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+  if (receipt.status !== "success") throw new Error(`${label} 트랜잭션이 실패했습니다: ${txHash}`);
+  console.log(`  ${label} ✓ ${txHash}`);
+  return receipt;
+}
+
+// 이전 실행이 계약을 만들고 예치 전에 멈췄을 수 있다. 같은 조건의 미예치
+// 계약이 있으면 새로 만들지 않고 그것을 이어서 쓴다 (스크립트 재실행 안전).
+const existingIds = await escrow.read.getClientAgreementIds([client.account.address]);
+let agreementId: bigint | undefined;
+
+for (const id of existingIds) {
+  const a = await escrow.read.getAgreement([id]);
+  const reusable =
+    a.status === 0 && // Created — 아직 예치 전
+    a.provider.toLowerCase() === provider.toLowerCase() &&
+    a.arbiter.toLowerCase() === arbiter.toLowerCase() &&
+    a.originalAmount === TOTAL;
+
+  if (reusable) {
+    agreementId = id;
+    console.log(`\n예치 전 상태인 기존 계약 #${id} 을 이어서 씁니다.`);
+    break;
+  }
+}
+
+if (agreementId === undefined) {
+  console.log("\n계약을 만드는 중...");
+  const createReceipt = await send(
+    "계약 생성",
+    escrow.write.createAgreement(
   [
     provider as `0x${string}`,
     arbiter as `0x${string}`,
@@ -96,18 +131,36 @@ await escrow.write.createAgreement(
     }),
   ],
   { account: client.account },
-);
+    ),
+  );
 
-const agreementId = (await escrow.read.agreementCount()) - 1n;
+  // 동시에 다른 계약이 생겼을 수도 있으므로 카운터 대신 이벤트에서 번호를 읽는다
+  const created = parseEventLogs({
+    abi: escrow.abi,
+    eventName: "AgreementCreated",
+    logs: createReceipt.logs,
+  });
+  agreementId = (created[0]?.args as { agreementId?: bigint } | undefined)?.agreementId;
+  if (agreementId === undefined) throw new Error("AgreementCreated 이벤트를 찾지 못했습니다.");
+}
+
 console.log(`  계약 번호: ${agreementId}`);
 
-console.log("토큰 사용 승인...");
-await token.write.approve([deployment.escrow as `0x${string}`, TOTAL], { account: client.account });
+console.log("\n토큰 사용 승인...");
+await send(
+  "approve",
+  token.write.approve([deployment.escrow as `0x${string}`, TOTAL], { account: client.account }),
+);
 
-console.log("계약금 예치...");
-await escrow.write.fundAgreement([agreementId], { account: client.account });
+console.log("\n계약금 예치...");
+const fundReceipt = await send(
+  "fundAgreement",
+  escrow.write.fundAgreement([agreementId], { account: client.account }),
+);
 
-const locked = await escrow.read.escrowBalance([agreementId]);
+// 공개 RPC 는 노드 여러 대를 오가므로, 방금 채굴된 블록을 명시해 조회한다.
+// 그러지 않으면 아직 따라오지 못한 노드가 이전 값을 돌려줄 수 있다.
+const locked = await escrow.read.escrowBalance([agreementId], { blockNumber: fundReceipt.blockNumber });
 console.log(`  잠긴 금액: ${locked / 1_000_000n} mKRW`);
 
 // 업체 지갑을 이 스크립트가 다룰 수 있을 때(로컬 노드)만 1단계까지 진행해서
@@ -116,15 +169,21 @@ const providerWallet = wallets.find((w) => w.account.address.toLowerCase() === p
 
 if (providerWallet) {
   console.log("\n1단계 증빙 제출 (업체)...");
-  await escrow.write.submitMilestone(
-    [agreementId, 0n, hash("발주서-2026-07.pdf"), "자재 발주를 완료했습니다. 발주서 첨부합니다."],
-    { account: providerWallet.account },
+  await send(
+    "submitMilestone",
+    escrow.write.submitMilestone(
+      [agreementId, 0n, hash("발주서-2026-07.pdf"), "자재 발주를 완료했습니다. 발주서 첨부합니다."],
+      { account: providerWallet.account },
+    ),
   );
 
-  console.log("1단계 승인 (고객)...");
-  await escrow.write.approveMilestone([agreementId, 0n, hash("확인"), "발주서 확인했습니다."], {
-    account: client.account,
-  });
+  console.log("\n1단계 승인 (고객)...");
+  await send(
+    "approveMilestone",
+    escrow.write.approveMilestone([agreementId, 0n, hash("확인"), "발주서 확인했습니다."], {
+      account: client.account,
+    }),
+  );
 
   const paid = await token.read.balanceOf([provider as `0x${string}`]);
   console.log(`  업체 수령액: ${paid / 1_000_000n} mKRW`);

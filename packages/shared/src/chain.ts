@@ -32,6 +32,12 @@ export const giwaSepolia = defineChain({
   testnet: true,
 });
 
+/**
+ * GIWA 공개 RPC 는 eth_getLogs 를 한 번에 10만 블록까지만 받는다.
+ * 이벤트를 읽을 때 "earliest" 부터 훑으면 거부되므로 배포 블록에서 시작한다.
+ */
+export const MAX_LOG_BLOCK_RANGE = 100_000n;
+
 export const explorerTx = (hash: string) => `${GIWA_EXPLORER_URL}/tx/${hash}`;
 export const explorerAddress = (address: string) => `${GIWA_EXPLORER_URL}/address/${address}`;
 
