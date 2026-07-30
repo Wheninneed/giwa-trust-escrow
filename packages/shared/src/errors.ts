@@ -49,6 +49,10 @@ const PATTERN_ERRORS: Array<[RegExp, string]> = [
   [/rate ?limit|429/i, "RPC 요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해 주세요."],
   [/nonce/i, "이전 거래가 아직 처리 중입니다. 잠시 후 다시 시도해 주세요."],
   [/connector not connected|no account/i, "지갑이 연결되어 있지 않습니다."],
+  [
+    /provider not found|no injected provider|no ethereum provider/i,
+    "브라우저에서 지갑을 찾지 못했습니다. 크롬·엣지·파이어폭스에 메타마스크를 설치한 뒤 다시 시도해 주세요. 휴대폰이라면 메타마스크 앱 안의 브라우저로 접속해야 합니다.",
+  ],
 ];
 
 export function toKoreanError(error: unknown): string {

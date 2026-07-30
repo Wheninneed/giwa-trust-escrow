@@ -34,7 +34,7 @@ export function SetupGuard({ children, requireWallet = true }: { children: React
     return (
       <div className="card-soft center stack stack-16" style={{ padding: "48px 24px" }}>
         <strong style={{ fontSize: 17 }}>지갑을 연결해 주세요</strong>
-        <p className="muted" style={{ maxWidth: 380, margin: "0 auto" }}>
+        <p className="muted" style={{ maxWidth: 420, margin: "0 auto" }}>
           계약을 만들고 확인하려면 GIWA Sepolia 를 지원하는 지갑이 필요합니다. 가스비로 쓸 테스트 ETH 는{" "}
           <a className="link" href={GIWA_FAUCET_URL} target="_blank" rel="noreferrer">
             GIWA faucet
@@ -44,6 +44,10 @@ export function SetupGuard({ children, requireWallet = true }: { children: React
         <div className="row" style={{ justifyContent: "center" }}>
           <WalletButton />
         </div>
+        <p className="hint" style={{ maxWidth: 420, margin: "0 auto" }}>
+          지갑이 없으신가요? 크롬·엣지·파이어폭스·브레이브에 메타마스크를 설치하면 됩니다. 휴대폰이라면 메타마스크
+          앱을 열고 <strong>앱 안의 브라우저</strong>로 이 주소를 여세요.
+        </p>
       </div>
     );
   }
