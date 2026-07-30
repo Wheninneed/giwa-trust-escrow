@@ -659,6 +659,81 @@ describe("상호 합의 취소", () => {
       "NotParty",
     );
   });
+
+  it("상대방이 취소 제안을 거절하면 계약이 다시 진행된다", async () => {
+    const ctx = await setup();
+    const id = await createAndFund(ctx);
+
+    await ctx.escrow.write.proposeCancellation([id, hash("사유")], { account: ctx.client.account });
+    await ctx.escrow.write.withdrawCancellation([id], { account: ctx.provider.account });
+
+    assert.equal((await ctx.escrow.read.getAgreement([id])).status, Status.Active);
+    assert.equal(
+      (await ctx.escrow.read.cancellationProposer([id])).toLowerCase(),
+      "0x0000000000000000000000000000000000000000",
+    );
+
+    // 계약이 실제로 다시 굴러가야 한다
+    await ctx.escrow.write.submitMilestone([id, 0n, hash("증빙")], { account: ctx.provider.account });
+    await ctx.escrow.write.approveMilestone([id, 0n, hash("확인")], { account: ctx.client.account });
+    await assertAccounting(ctx);
+  });
+
+  it("제안자 본인도 취소 제안을 물릴 수 있다", async () => {
+    const ctx = await setup();
+    const id = await createAndFund(ctx);
+
+    await ctx.escrow.write.proposeCancellation([id, hash("사유")], { account: ctx.provider.account });
+    await ctx.escrow.write.withdrawCancellation([id], { account: ctx.provider.account });
+
+    assert.equal((await ctx.escrow.read.getAgreement([id])).status, Status.Active);
+  });
+
+  it("취소 제안만으로 상대방의 이의 제기를 막을 수 없다", async () => {
+    const ctx = await setup();
+    const id = await createAndFund(ctx);
+
+    // 업체가 작업을 끝내고 증빙을 냈는데
+    await ctx.escrow.write.submitMilestone([id, 0n, hash("증빙")], { account: ctx.provider.account });
+    // 고객이 승인 대신 취소를 제안해 대금을 회피하려 한다
+    await ctx.escrow.write.proposeCancellation([id, hash("그만하겠습니다")], { account: ctx.client.account });
+
+    // 업체는 여전히 분쟁을 제기할 수 있어야 한다
+    await ctx.escrow.write.raiseDispute([id, 0n, hash("완료한 작업입니다")], { account: ctx.provider.account });
+    assert.equal((await ctx.escrow.read.getAgreement([id])).status, Status.Disputed);
+
+    // 분쟁이 시작되면 계류 중이던 취소 제안은 무효가 된다
+    await expectRevert(
+      ctx.escrow.write.acceptCancellation([id], { account: ctx.provider.account }),
+      "InvalidAgreementStatus",
+    );
+
+    // 중재자가 배분하면 정상 흐름으로 돌아온다
+    await ctx.escrow.write.resolveDispute([id, 0n, DEMO_AMOUNTS[0], 0n, hash("업체 손")], {
+      account: ctx.arbiter.account,
+    });
+    assert.equal((await ctx.escrow.read.getAgreement([id])).status, Status.Active);
+    await assertAccounting(ctx);
+  });
+
+  it("취소 대기 상태가 아니면 물릴 수 없다", async () => {
+    const ctx = await setup();
+    const id = await createAndFund(ctx);
+    await expectRevert(
+      ctx.escrow.write.withdrawCancellation([id], { account: ctx.client.account }),
+      "InvalidAgreementStatus",
+    );
+  });
+
+  it("제3자는 취소 제안을 물릴 수 없다", async () => {
+    const ctx = await setup();
+    const id = await createAndFund(ctx);
+    await ctx.escrow.write.proposeCancellation([id, hash("사유")], { account: ctx.client.account });
+    await expectRevert(
+      ctx.escrow.write.withdrawCancellation([id], { account: ctx.outsider.account }),
+      "NotParty",
+    );
+  });
 });
 
 describe("관리자 권한", () => {
@@ -686,20 +761,64 @@ describe("관리자 권한", () => {
     await expectRevert(ctx.escrow.write.pause({ account: ctx.outsider.account }), "OwnableUnauthorizedAccount");
   });
 
-  it("관리자는 예치금을 빼낼 수 있는 함수를 갖고 있지 않다", async () => {
+  it("상태를 바꾸는 함수는 허용된 목록뿐이다", async () => {
+    const ctx = await setup();
+
+    // 자금을 움직일 수 있는 진입점이 늘어나면 이 테스트가 먼저 깨진다.
+    // 새 함수를 추가할 때는 권한을 다시 검토하고 여기에 명시적으로 넣어야 한다.
+    const allowed = new Set([
+      // 계약 당사자만 호출 — 각 함수에서 client/provider/arbiter 를 검증한다
+      "createAgreement",
+      "fundAgreement",
+      "submitMilestone",
+      "approveMilestone",
+      "requestRevision",
+      "releaseRetention",
+      "raiseDispute",
+      "resolveDispute",
+      "proposeChangeOrder",
+      "acceptChangeOrder",
+      "fundChangeOrder",
+      "proposeCancellation",
+      "withdrawCancellation",
+      "acceptCancellation",
+      // 관리자 — 자금을 옮기지 않는다
+      "pause",
+      "unpause",
+      "transferOwnership",
+      "acceptOwnership",
+      "renounceOwnership",
+    ]);
+
+    const stateChanging = ctx.escrow.abi
+      .filter((item) => item.type === "function" && item.stateMutability !== "view" && item.stateMutability !== "pure")
+      .map((item) => (item as { name: string }).name);
+
+    const unexpected = stateChanging.filter((name) => !allowed.has(name));
+    assert.deepEqual(unexpected, [], "검토되지 않은 상태 변경 함수가 있다");
+  });
+
+  it("관리자는 예치금을 빼낼 수 없다", async () => {
     const ctx = await setup();
     const id = await createAndFund(ctx);
+    const before = await ctx.token.read.balanceOf([ctx.admin.account.address]);
 
-    // ABI 전체에 자금을 옮길 수 있는 관리자 함수가 존재하지 않아야 한다
-    const adminOnly = ctx.escrow.abi.filter(
-      (item) => item.type === "function" && /withdraw|sweep|rescue|drain|emergency/i.test(item.name),
-    );
-    assert.deepEqual(adminOnly, [], "임의 출금 함수가 있으면 안 된다");
-
-    // 일시정지를 걸었다 풀어도 잠긴 금액은 그대로다
+    // 관리자가 쓸 수 있는 모든 수단을 동원해도 잠긴 금액은 움직이지 않는다
     await ctx.escrow.write.pause({ account: ctx.admin.account });
     await ctx.escrow.write.unpause({ account: ctx.admin.account });
-    assert.equal(await ctx.escrow.read.escrowBalance([id]), DEMO_TOTAL);
+
+    // 당사자 전용 함수는 관리자에게도 닫혀 있다
+    await expectRevert(
+      ctx.escrow.write.approveMilestone([id, 0n, hash("확인")], { account: ctx.admin.account }),
+      "NotClient",
+    );
+    await expectRevert(
+      ctx.escrow.write.acceptCancellation([id], { account: ctx.admin.account }),
+      "NotParty",
+    );
+
+    assert.equal(await ctx.escrow.read.escrowBalance([id]), DEMO_TOTAL, "잠긴 금액이 그대로여야 한다");
+    assert.equal(await ctx.token.read.balanceOf([ctx.admin.account.address]), before, "관리자 잔액이 늘면 안 된다");
     await assertAccounting(ctx);
   });
 

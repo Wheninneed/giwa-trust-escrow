@@ -64,19 +64,6 @@ export function MilestoneActions({ agreementId, index, milestone, role, agreemen
       );
     }
 
-    if (
-      (role === "client" || role === "provider") &&
-      (status === MilestoneStatus.Submitted ||
-        status === MilestoneStatus.RevisionRequested ||
-        (milestone.isRetention && status === MilestoneStatus.Approved))
-    ) {
-      buttons.push(
-        <button key="dispute" type="button" className="btn btn-ghost btn-sm" onClick={() => setDialog("dispute")}>
-          분쟁 제기
-        </button>,
-      );
-    }
-
     if (canReleaseRetention && (role === "client" || role === "provider")) {
       buttons.push(
         <button
@@ -97,6 +84,24 @@ export function MilestoneActions({ agreementId, index, milestone, role, agreemen
         </button>,
       );
     }
+  }
+
+  // 분쟁 제기는 취소 승인 대기 중에도 열어둔다. 상대방이 취소를 제안했다는
+  // 이유로 완료한 작업에 대한 이의 제기가 막히면 안 된다.
+  const canDispute =
+    (agreementStatus === AgreementStatus.Active || agreementStatus === AgreementStatus.CancelPending) &&
+    isActive &&
+    (role === "client" || role === "provider") &&
+    (status === MilestoneStatus.Submitted ||
+      status === MilestoneStatus.RevisionRequested ||
+      (milestone.isRetention && status === MilestoneStatus.Approved));
+
+  if (canDispute) {
+    buttons.push(
+      <button key="dispute" type="button" className="btn btn-ghost btn-sm" onClick={() => setDialog("dispute")}>
+        분쟁 제기
+      </button>,
+    );
   }
 
   if (role === "arbiter" && status === MilestoneStatus.Disputed) {

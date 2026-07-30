@@ -1,8 +1,8 @@
 {
   "chainId": 91342,
   "network": "giwaSepolia",
-  "deployedAt": "2026-07-30T17:14:00.416Z",
+  "deployedAt": "2026-07-30T17:27:24.839Z",
   "deployer": "0x03f317229ab926fad80b5c4f0a683999cd043dbd",
-  "mockKRW": "0x640c78feb045315dd01b21ad9a0536aaac246eec",
-  "escrow": "0xcd3e0018aaac2f7fe6b0aede85c1d958184ac64c"
+  "mockKRW": "0x0011820085d2a60b902537b504a9767482a7f2b4",
+  "escrow": "0x649050b15a61f3690c8a07857203e6f1ec72c3a5"
 }

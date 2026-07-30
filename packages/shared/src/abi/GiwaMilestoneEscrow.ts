@@ -350,6 +350,25 @@ export const GiwaMilestoneEscrowAbi = [
       },
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "withdrawnBy",
+        "type": "address"
+      }
+    ],
+    "name": "CancellationWithdrawn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "agreementId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "changeOrderId",
         "type": "uint256"
@@ -1734,6 +1753,19 @@ export const GiwaMilestoneEscrowAbi = [
   {
     "inputs": [],
     "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "agreementId",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawCancellation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

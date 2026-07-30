@@ -165,6 +165,7 @@ contract GiwaMilestoneEscrow is Ownable2Step, Pausable, ReentrancyGuard {
     event ChangeOrderFunded(uint256 indexed agreementId, uint256 indexed changeOrderId, uint256 amount);
     event MilestoneAdded(uint256 indexed agreementId, uint256 indexed milestoneIndex, uint256 amount, uint64 dueAt);
     event CancellationProposed(uint256 indexed agreementId, address indexed proposer, bytes32 reasonHash);
+    event CancellationWithdrawn(uint256 indexed agreementId, address indexed withdrawnBy);
     event AgreementCancelled(uint256 indexed agreementId, uint256 refundAmount);
     event AgreementCompleted(uint256 indexed agreementId);
 
@@ -442,12 +443,20 @@ contract GiwaMilestoneEscrow is Ownable2Step, Pausable, ReentrancyGuard {
     function raiseDispute(uint256 agreementId, uint256 milestoneIndex, bytes32 reasonHash, string memory note) public {
         Agreement storage a = _requireAgreement(agreementId);
         if (msg.sender != a.client && msg.sender != a.provider) revert NotParty();
-        if (a.status != AgreementStatus.Active && a.status != AgreementStatus.Disputed) revert InvalidAgreementStatus();
+        // 취소 승인 대기 중에도 분쟁을 제기할 수 있어야 한다. 그렇지 않으면
+        // 한쪽이 취소를 제안하는 것만으로 상대방의 이의 제기 수단을 막을 수 있다.
+        if (
+            a.status != AgreementStatus.Active && a.status != AgreementStatus.Disputed
+                && a.status != AgreementStatus.CancelPending
+        ) revert InvalidAgreementStatus();
 
         Milestone storage m = _requireMilestone(agreementId, milestoneIndex);
         bool disputable = m.status == MilestoneStatus.Submitted || m.status == MilestoneStatus.RevisionRequested
             || (m.isRetention && m.status == MilestoneStatus.Approved);
         if (!disputable) revert InvalidMilestoneStatus();
+
+        // 분쟁이 시작되면 중재 절차가 우선하므로 계류 중인 취소 제안은 버린다.
+        if (a.status == AgreementStatus.CancelPending) delete _cancelProposer[agreementId];
 
         m.status = MilestoneStatus.Disputed;
         _openDisputes[agreementId] += 1;
@@ -605,6 +614,20 @@ contract GiwaMilestoneEscrow is Ownable2Step, Pausable, ReentrancyGuard {
 
         emit CancellationProposed(agreementId, msg.sender, reasonHash);
         _emitNote(agreementId, type(uint256).max, NoteKind.Cancellation, note);
+    }
+
+    /// @notice 계류 중인 취소 제안을 물린다. 계약은 다시 진행 중으로 돌아간다.
+    /// @dev 제안자와 상대방 모두 호출할 수 있다. 취소 제안만으로 계약을 무기한
+    ///      묶어두거나, 완료된 단계의 승인·분쟁 경로를 막지 못하게 하기 위함이다.
+    function withdrawCancellation(uint256 agreementId) external {
+        Agreement storage a = _requireAgreement(agreementId);
+        if (msg.sender != a.client && msg.sender != a.provider) revert NotParty();
+        if (a.status != AgreementStatus.CancelPending) revert InvalidAgreementStatus();
+
+        a.status = AgreementStatus.Active;
+        delete _cancelProposer[agreementId];
+
+        emit CancellationWithdrawn(agreementId, msg.sender);
     }
 
     /// @notice 상대방이 취소를 승인하면 미지급 잔액 전부가 고객에게 환불된다.

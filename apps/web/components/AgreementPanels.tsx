@@ -311,18 +311,43 @@ export function CancellationPanel({
             <dt>이미 지급된 금액</dt>
             <dd>{formatMkrwWithUnit(agreement.totalReleased)}</dd>
           </dl>
-          {!iProposed && (
+
+          <div className="row wrap" style={{ gap: 8 }}>
+            {!iProposed && (
+              <button
+                type="button"
+                className="btn btn-danger grow"
+                disabled={isPending}
+                onClick={() =>
+                  run("계약 취소 수락", { ...escrowContract, functionName: "acceptCancellation", args: [agreementId] })
+                }
+              >
+                {isPending ? <Spinner /> : null}
+                취소 수락하고 잔액 환불
+              </button>
+            )}
             <button
               type="button"
-              className="btn btn-danger btn-block"
+              className="btn btn-secondary grow"
               disabled={isPending}
               onClick={() =>
-                run("계약 취소 수락", { ...escrowContract, functionName: "acceptCancellation", args: [agreementId] })
+                run(iProposed ? "취소 제안 물리기" : "취소 제안 거절", {
+                  ...escrowContract,
+                  functionName: "withdrawCancellation",
+                  args: [agreementId],
+                })
               }
             >
               {isPending ? <Spinner /> : null}
-              취소 수락하고 잔액 환불
+              {iProposed ? "제안 물리기" : "거절하고 계속 진행"}
             </button>
+          </div>
+
+          {!iProposed && (
+            <span className="hint">
+              완료한 작업의 대금을 아직 못 받았다면, 거절한 뒤 해당 단계에서 분쟁을 제기하세요. 취소 제안 중에도 분쟁은
+              제기할 수 있습니다.
+            </span>
           )}
         </>
       ) : (
