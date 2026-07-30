@@ -1,0 +1,19 @@
+{
+  "name": "giwa-trust-escrow",
+  "private": true,
+  "version": "0.1.0",
+  "description": "GIWA 기반 마일스톤 에스크로 — 서비스 대금을 미리 예치하고 단계별로 지급합니다.",
+  "scripts": {
+    "compile": "pnpm --filter contracts compile",
+    "test": "pnpm --filter contracts test",
+    "deploy:giwa": "pnpm --filter contracts deploy:giwa",
+    "verify:giwa": "pnpm --filter contracts verify:giwa",
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint"
+  },
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=22"
+  }
+}

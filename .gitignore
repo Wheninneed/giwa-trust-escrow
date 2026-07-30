@@ -1,0 +1,28 @@
+node_modules/
+.pnpm-store/
+
+# env — .env.example 만 커밋한다
+.env
+.env.*
+!.env.example
+
+# hardhat
+artifacts/
+cache/
+types/
+coverage/
+coverage.json
+
+# next
+.next/
+out/
+build/
+.vercel/
+next-env.d.ts
+*.tsbuildinfo
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
