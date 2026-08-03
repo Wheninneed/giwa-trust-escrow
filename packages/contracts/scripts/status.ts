@@ -31,6 +31,7 @@ const escrow = await viem.getContractAt("GiwaMilestoneEscrow", deployment.escrow
 
 const AGREEMENT_STATUS = ["예치 대기", "진행 중", "분쟁 중", "취소 대기", "완료", "취소됨"];
 const MILESTONE_STATUS = ["대기", "제출됨", "보완요청", "승인됨", "분쟁중", "중재정산", "지급완료"];
+const CHANGE_ORDER_STATUS = ["승인 대기", "추가금 입금 대기", "확정", "거절", "취소"];
 const mkrw = (value: bigint) => `${(value / 1_000_000n).toLocaleString("ko-KR")} mKRW`;
 
 const count = await escrow.read.agreementCount();
@@ -58,5 +59,25 @@ for (let i = 0n; i < count; i++) {
   console.log(
     `     단계 ${milestones.map((m, index) => `${index + 1}.${MILESTONE_STATUS[m.status]}`).join(" ")}`,
   );
+
+  const changeOrders = await escrow.read.getChangeOrders([i]);
+  for (const co of changeOrders) {
+    let coTitle = "(제목 없음)";
+    try {
+      coTitle = (JSON.parse(co.metadataURI) as { t?: string }).t ?? coTitle;
+    } catch {
+      // 외부 URI 형식이면 그대로 둔다
+    }
+    const role =
+      co.proposer.toLowerCase() === a.client.toLowerCase()
+        ? "고객"
+        : co.proposer.toLowerCase() === a.provider.toLowerCase()
+          ? "업체"
+          : "제3자";
+    console.log(
+      `     변경계약 #${co.id} ${CHANGE_ORDER_STATUS[co.status]} | ${coTitle} | ${mkrw(co.additionalAmount)} | 제안 ${role}`,
+    );
+  }
+
   console.log("");
 }
