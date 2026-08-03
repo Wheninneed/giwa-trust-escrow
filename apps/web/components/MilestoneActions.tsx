@@ -197,7 +197,13 @@ function SubmitDialog({
 }) {
   const [evidence, setEvidence] = useState<{ hash?: Hex; fileName?: string }>({});
   const [note, setNote] = useState("");
+  const [link, setLink] = useState("");
   const { run, isPending } = useTx();
+
+  // 온체인 note 길이 제한(1024 바이트)을 넘지 않도록 미리 확인한다
+  const composed = [note.trim(), evidence.fileName, link.trim()].filter(Boolean).join("\n");
+  const byteLength = new TextEncoder().encode(composed).length;
+  const tooLong = byteLength > 1000;
 
   return (
     <Modal open={open} onClose={onClose} title="작업 완료 증빙 제출">
@@ -210,6 +216,24 @@ function SubmitDialog({
         <EvidenceInput value={evidence} onChange={setEvidence} />
 
         <div className="field">
+          <label className="label" htmlFor="submit-link">
+            증빙 공유 링크 (선택)
+          </label>
+          <input
+            id="submit-link"
+            className="input"
+            placeholder="https://drive.google.com/..."
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            inputMode="url"
+          />
+          <span className="hint">
+            파일은 체인에 올라가지 않습니다. 고객이 바로 열어볼 수 있게 사진·문서를 올려둔 주소를 함께 남기면 승인이
+            빨라집니다.
+          </span>
+        </div>
+
+        <div className="field">
           <label className="label" htmlFor="submit-note">
             설명 (선택)
           </label>
@@ -219,19 +243,21 @@ function SubmitDialog({
             placeholder="어떤 작업을 완료했는지 간단히 적어 주세요"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            maxLength={300}
+            maxLength={250}
           />
         </div>
+
+        {tooLong && <span className="error-text">설명과 링크가 너무 깁니다. 조금 줄여 주세요.</span>}
 
         <button
           type="button"
           className="btn btn-primary btn-lg btn-block"
-          disabled={!evidence.hash || isPending}
+          disabled={!evidence.hash || isPending || tooLong}
           onClick={async () => {
             await run("증빙 제출", {
               ...escrowContract,
               functionName: "submitMilestone",
-              args: [agreementId, BigInt(index), evidence.hash as Hex, note || (evidence.fileName ?? "")],
+              args: [agreementId, BigInt(index), evidence.hash as Hex, composed],
             });
             onClose();
           }}

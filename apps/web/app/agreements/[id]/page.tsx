@@ -26,9 +26,11 @@ import { NOTE_KIND_LABEL, useActivity } from "@/lib/useActivity";
 import { useTx } from "@/lib/useTx";
 import { isZeroHash } from "@/lib/hash";
 import { SetupGuard } from "@/components/SetupGuard";
-import { AddressChip, Amount, Badge, Notice, Spinner } from "@/components/ui";
+import { AddressChip, Amount, Badge, Linkify, Notice, Spinner } from "@/components/ui";
 import { MilestoneActions } from "@/components/MilestoneActions";
 import { CancellationPanel, ChangeOrderPanel } from "@/components/AgreementPanels";
+import { EvidenceVerifier } from "@/components/EvidenceVerifier";
+import { PaymentPanel } from "@/components/PaymentPanel";
 
 export default function AgreementDetailPage() {
   const params = useParams<{ id: string }>();
@@ -73,6 +75,14 @@ function Detail({ id }: { id: bigint }) {
 
   const { agreement, milestones, changeOrders, escrowBalance, firstUnsettled, role, metadata } = detail;
   const activeMilestone = milestones[firstUnsettled];
+
+  // 단계 카드에서 바로 증빙 설명을 볼 수 있어야 승인·분쟁을 판단할 수 있다.
+  // 같은 단계에 여러 번 제출했다면 가장 최근 것만 남긴다.
+  const evidenceNotes = new Map<number, string>();
+  for (const entry of activity.data ?? []) {
+    if (entry.kind !== 0 || entry.milestoneIndex === null) continue;
+    if (!evidenceNotes.has(entry.milestoneIndex)) evidenceNotes.set(entry.milestoneIndex, entry.note);
+  }
 
   const action = nextAction({
     role,
@@ -226,18 +236,32 @@ function Detail({ id }: { id: bigint }) {
 
                     {metadata.ev?.[index] && <span className="muted">증빙: {metadata.ev[index]}</span>}
 
-                    {!isZeroHash(milestone.evidenceHash) && (
-                      <details>
-                        <summary className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-                          증빙 파일 지문 보기
-                        </summary>
-                        <code className="mono" style={{ wordBreak: "break-all", color: "var(--ink-2)" }}>
-                          {milestone.evidenceHash}
-                        </code>
-                        <p className="hint" style={{ marginTop: 4 }}>
-                          상대방이 보낸 파일의 SHA-256 이 이 값과 같으면 제출된 그 파일이 맞습니다.
+                    {evidenceNotes.get(index) && (
+                      <div className="card-soft stack stack-4">
+                        <span className="label">업체가 남긴 내용</span>
+                        <p style={{ color: "var(--ink-2)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          <Linkify text={evidenceNotes.get(index) as string} />
                         </p>
-                      </details>
+                      </div>
+                    )}
+
+                    {!isZeroHash(milestone.evidenceHash) && (
+                      <>
+                        {(role === "client" || role === "arbiter") && (
+                          <EvidenceVerifier evidenceHash={milestone.evidenceHash} />
+                        )}
+                        <details>
+                          <summary className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
+                            증빙 파일 지문 보기
+                          </summary>
+                          <code className="mono" style={{ wordBreak: "break-all", color: "var(--ink-2)" }}>
+                            {milestone.evidenceHash}
+                          </code>
+                          <p className="hint" style={{ marginTop: 4 }}>
+                            상대방이 보낸 파일의 SHA-256 이 이 값과 같으면 제출된 그 파일이 맞습니다.
+                          </p>
+                        </details>
+                      </>
                     )}
 
                     {milestone.submittedAt > 0n && (
@@ -259,6 +283,8 @@ function Detail({ id }: { id: bigint }) {
           })}
         </div>
       </section>
+
+      <PaymentPanel agreementId={id} agreement={agreement} metadata={metadata} role={role} />
 
       <ChangeOrderPanel agreementId={id} agreement={agreement} changeOrders={changeOrders} role={role} />
 
@@ -290,7 +316,9 @@ function Detail({ id }: { id: bigint }) {
                 거래 ↗
               </a>
             </div>
-            <p style={{ color: "var(--ink-2)" }}>{entry.note}</p>
+            <p style={{ color: "var(--ink-2)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+              <Linkify text={entry.note} />
+            </p>
             <hr className="divider" />
           </div>
         ))}

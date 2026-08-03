@@ -135,6 +135,29 @@ export function Modal({
   );
 }
 
+/**
+ * 설명문 안의 주소를 눌러서 열 수 있게 한다.
+ * 파일 자체는 체인에 올리지 않으므로, 업체가 공유 링크를 남기면 고객이
+ * 여기서 바로 증빙을 열어볼 수 있어야 한다.
+ */
+export function Linkify({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        /^https?:\/\//.test(part) ? (
+          <a key={index} className="link" href={part} target="_blank" rel="noreferrer noopener">
+            {part}
+          </a>
+        ) : (
+          <span key={index}>{part}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 export function Spinner({ dark = false }: { dark?: boolean }) {
   return <span className="spinner" data-dark={dark} aria-hidden />;
 }

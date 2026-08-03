@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { usePublicClient } from "wagmi";
-import { MAX_LOG_BLOCK_RANGE } from "shared";
-import { ESCROW_DEPLOY_BLOCK, escrowContract, isDeployed } from "./contracts";
+import { escrowContract, isDeployed } from "./contracts";
+import { fetchLogsInChunks } from "./logs";
 
 export interface ActivityEntry {
   kind: number;
@@ -29,36 +29,16 @@ export function useActivity(agreementId?: bigint) {
     staleTime: 15_000,
     retry: 0,
     queryFn: async (): Promise<ActivityEntry[]> => {
-      const latest = await publicClient!.getBlockNumber();
-
-      // 배포 블록을 모르면 RPC 가 받아주는 최근 구간만 훑는다
-      const start =
-        ESCROW_DEPLOY_BLOCK > 0n
-          ? ESCROW_DEPLOY_BLOCK
-          : latest > MAX_LOG_BLOCK_RANGE
-            ? latest - MAX_LOG_BLOCK_RANGE + 1n
-            : 0n;
-
-      const ranges: Array<{ from: bigint; to: bigint }> = [];
-      for (let from = start; from <= latest; from += MAX_LOG_BLOCK_RANGE) {
-        const to = from + MAX_LOG_BLOCK_RANGE - 1n;
-        ranges.push({ from, to: to > latest ? latest : to });
-      }
-
-      const chunks = await Promise.all(
-        ranges.map((range) =>
-          publicClient!.getContractEvents({
-            address: escrowContract.address,
-            abi: escrowContract.abi,
-            eventName: "MilestoneNote",
-            args: { agreementId },
-            fromBlock: range.from,
-            toBlock: range.to,
-          }),
-        ),
+      const logs = await fetchLogsInChunks(publicClient!, (fromBlock, toBlock) =>
+        publicClient!.getContractEvents({
+          address: escrowContract.address,
+          abi: escrowContract.abi,
+          eventName: "MilestoneNote",
+          args: { agreementId },
+          fromBlock,
+          toBlock,
+        }),
       );
-
-      const logs = chunks.flat();
 
       return logs
         .map((log) => {
