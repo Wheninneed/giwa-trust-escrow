@@ -56,9 +56,12 @@ for (let i = 0n; i < count; i++) {
   console.log(`     고객 ${a.client}`);
   console.log(`     업체 ${a.provider}`);
   console.log(`     중재 ${a.arbiter}`);
-  console.log(
-    `     단계 ${milestones.map((m, index) => `${index + 1}.${MILESTONE_STATUS[m.status]}`).join(" ")}`,
-  );
+  milestones.forEach((m, index) => {
+    const tag = m.isRetention ? " [하자보증금]" : "";
+    console.log(
+      `     ${index + 1}. ${MILESTONE_STATUS[m.status].padEnd(6)} ${mkrw(m.amount).padStart(16)}${tag}`,
+    );
+  });
 
   const changeOrders = await escrow.read.getChangeOrders([i]);
   for (const co of changeOrders) {
