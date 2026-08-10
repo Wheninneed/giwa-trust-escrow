@@ -8,13 +8,16 @@ import {
   formatMkrwWithUnit,
   parseMkrw,
   timeUntil,
+  toKoreanError,
   type Milestone,
   type Role,
 } from "shared";
 import { escrowContract } from "@/lib/contracts";
 import { hashText } from "@/lib/hash";
 import { useTx } from "@/lib/useTx";
-import { EvidenceInput } from "./EvidenceInput";
+import { uploadEvidence, useEvidenceEnabled, useEvidenceSigner } from "@/lib/useEvidence";
+import { EvidenceInput, type EvidenceSelection } from "./EvidenceInput";
+import { useToast } from "./Toast";
 import { Amount, Modal, Notice, Spinner } from "./ui";
 
 interface Props {
@@ -195,10 +198,14 @@ function SubmitDialog({
   index: number;
   milestone: Milestone;
 }) {
-  const [evidence, setEvidence] = useState<{ hash?: Hex; fileName?: string }>({});
+  const [evidence, setEvidence] = useState<EvidenceSelection>({});
   const [note, setNote] = useState("");
   const [link, setLink] = useState("");
+  const [phase, setPhase] = useState<string | null>(null);
   const { run, isPending } = useTx();
+  const toast = useToast();
+  const sign = useEvidenceSigner();
+  const { data: storageEnabled } = useEvidenceEnabled();
 
   // 온체인 note 길이 제한(1024 바이트)을 넘지 않도록 미리 확인한다
   const composed = [note.trim(), evidence.fileName, link.trim()].filter(Boolean).join("\n");
@@ -213,7 +220,7 @@ function SubmitDialog({
           <Amount value={milestone.amount} size="sm" />
         </div>
 
-        <EvidenceInput value={evidence} onChange={setEvidence} />
+        <EvidenceInput value={evidence} onChange={setEvidence} storageEnabled={Boolean(storageEnabled)} />
 
         <div className="field">
           <label className="label" htmlFor="submit-link">
@@ -249,17 +256,41 @@ function SubmitDialog({
 
         {tooLong && <span className="error-text">설명과 링크가 너무 깁니다. 조금 줄여 주세요.</span>}
 
+        {phase && (
+          <div className="notice" data-tone="info">
+            <span className="row" style={{ gap: 8 }}>
+              <Spinner dark />
+              {phase}
+            </span>
+          </div>
+        )}
+
         <button
           type="button"
           className="btn btn-primary btn-lg btn-block"
-          disabled={!evidence.hash || isPending || tooLong}
+          disabled={!evidence.hash || isPending || tooLong || phase !== null}
           onClick={async () => {
-            await run("증빙 제출", {
-              ...escrowContract,
-              functionName: "submitMilestone",
-              args: [agreementId, BigInt(index), evidence.hash as Hex, composed],
-            });
-            onClose();
+            try {
+              // 파일을 먼저 올린다. 트랜잭션이 먼저 나가면 온체인에 지문만 남고
+              // 정작 볼 파일이 없는 상태가 생길 수 있다.
+              if (storageEnabled && evidence.file) {
+                setPhase("1/2 파일을 올리는 중입니다");
+                const access = await sign("upload", agreementId, index);
+                await uploadEvidence({ access, file: evidence.file, sha256Hash: evidence.hash as Hex });
+              }
+
+              setPhase(storageEnabled && evidence.file ? "2/2 온체인에 기록하는 중입니다" : null);
+              await run("증빙 제출", {
+                ...escrowContract,
+                functionName: "submitMilestone",
+                args: [agreementId, BigInt(index), evidence.hash as Hex, composed],
+              });
+              onClose();
+            } catch (error) {
+              toast.push(toKoreanError(error), "danger");
+            } finally {
+              setPhase(null);
+            }
           }}
         >
           {isPending ? <Spinner /> : null}

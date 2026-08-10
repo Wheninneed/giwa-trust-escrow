@@ -29,7 +29,7 @@ import { SetupGuard } from "@/components/SetupGuard";
 import { AddressChip, Amount, Badge, Linkify, Notice, Spinner } from "@/components/ui";
 import { MilestoneActions } from "@/components/MilestoneActions";
 import { CancellationPanel, ChangeOrderPanel } from "@/components/AgreementPanels";
-import { EvidenceVerifier } from "@/components/EvidenceVerifier";
+import { EvidenceGallery } from "@/components/EvidenceGallery";
 import { PaymentPanel } from "@/components/PaymentPanel";
 
 export default function AgreementDetailPage() {
@@ -245,23 +245,8 @@ function Detail({ id }: { id: bigint }) {
                       </div>
                     )}
 
-                    {!isZeroHash(milestone.evidenceHash) && (
-                      <>
-                        {(role === "client" || role === "arbiter") && (
-                          <EvidenceVerifier evidenceHash={milestone.evidenceHash} />
-                        )}
-                        <details>
-                          <summary className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-                            증빙 파일 지문 보기
-                          </summary>
-                          <code className="mono" style={{ wordBreak: "break-all", color: "var(--ink-2)" }}>
-                            {milestone.evidenceHash}
-                          </code>
-                          <p className="hint" style={{ marginTop: 4 }}>
-                            상대방이 보낸 파일의 SHA-256 이 이 값과 같으면 제출된 그 파일이 맞습니다.
-                          </p>
-                        </details>
-                      </>
+                    {!isZeroHash(milestone.evidenceHash) && role !== "observer" && (
+                      <EvidenceGallery agreementId={id} milestoneIndex={index} />
                     )}
 
                     {milestone.submittedAt > 0n && (

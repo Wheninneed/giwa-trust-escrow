@@ -29,7 +29,7 @@ export function useActivity(agreementId?: bigint) {
     staleTime: 15_000,
     retry: 0,
     queryFn: async (): Promise<ActivityEntry[]> => {
-      const logs = await fetchLogsInChunks(publicClient!, (fromBlock, toBlock) =>
+      const { logs } = await fetchLogsInChunks(publicClient!, (fromBlock, toBlock) =>
         publicClient!.getContractEvents({
           address: escrowContract.address,
           abi: escrowContract.abi,

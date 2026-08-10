@@ -32,7 +32,7 @@ export function usePayments(agreementId?: bigint) {
     staleTime: 10_000,
     retry: 0,
     queryFn: async (): Promise<PaymentEntry[]> => {
-      const [paid, resolved] = await Promise.all([
+      const [paidResult, resolvedResult] = await Promise.all([
         fetchLogsInChunks(publicClient!, (fromBlock, toBlock) =>
           publicClient!.getContractEvents({
             address: escrowContract.address,
@@ -55,6 +55,8 @@ export function usePayments(agreementId?: bigint) {
         ),
       ]);
 
+      const paid = paidResult.logs;
+      const resolved = resolvedResult.logs;
       const entries: PaymentEntry[] = [];
 
       for (const log of paid) {

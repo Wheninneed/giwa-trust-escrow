@@ -7,3 +7,9 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@wagmi/connectors@8.0.26'
   - wagmi@3.7.5
+# Next.js 가 끌어오는 nanoid 3.3.16 에 무한 루프 취약점(GHSA-2v37-7h3g-55p8)이
+# 있어 패치 버전으로 올린다.
+# 범위를 ^3.3.17 로 묶는 이유: nanoid 4 부터는 ESM 전용이라 CommonJS 로 불러오는
+# postcss 가 깨진다. ">=3.3.17" 로 두면 6.x 가 설치되어 빌드가 실패한다.
+overrides:
+  nanoid: "^3.3.17"
