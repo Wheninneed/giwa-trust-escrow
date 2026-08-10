@@ -138,7 +138,7 @@ function AgreementList() {
           이 조건에 해당하는 계약이 없습니다.
         </div>
       ) : (
-        <div className="stack stack-12">
+        <div className="grid grid-2">
           {visible.map((summary) => (
             <AgreementCard key={summary.id.toString()} summary={summary} />
           ))}

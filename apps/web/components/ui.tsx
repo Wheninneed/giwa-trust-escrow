@@ -18,7 +18,15 @@ export function Badge({ label }: { label: StatusLabel }) {
 }
 
 /** 명세서 19.4 — mKRW 수치와 만원 환산을 함께 보여준다 */
-export function Amount({ value, size = "md" }: { value: bigint; size?: "md" | "lg" | "sm" }) {
+export function Amount({ value, size = "md" }: { value: bigint; size?: "md" | "lg" | "xl" | "sm" }) {
+  if (size === "xl") {
+    return (
+      <div className="stack stack-4">
+        <div className="figure-lg">{formatMkrwWithUnit(value)}</div>
+        <div className="figure-sub">{toKoreanAmount(value)}</div>
+      </div>
+    );
+  }
   if (size === "lg") {
     return (
       <div className="stack stack-4">

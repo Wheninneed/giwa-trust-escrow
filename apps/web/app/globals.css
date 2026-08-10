@@ -4,32 +4,38 @@
  */
 
 :root {
+  /* 회색 배경 위에 흰 카드를 얹는다. 경계선 대신 배경 대비로 영역을 나눈다. */
+  --page: #f2f4f6;
   --bg: #ffffff;
-  --surface: #f7f8fa;
-  --surface-2: #eef1f5;
-  --line: #e5e8eb;
-  --line-strong: #d1d6db;
+  --surface: #f2f4f6;
+  --surface-2: #e8ebed;
+  --line: #f2f4f6;
+  --line-strong: #e5e8eb;
 
-  --ink: #10141a;
-  --ink-2: #4a5560;
+  --ink: #191f28;
+  --ink-2: #4e5968;
   --ink-3: #8b95a1;
 
-  --brand: #1b64da;
-  --brand-ink: #0f4bab;
-  --brand-soft: #eaf1fd;
+  --brand: #3182f6;
+  --brand-ink: #1b64da;
+  --brand-soft: #e8f3ff;
 
-  --success: #00a06b;
-  --success-soft: #e5f6ef;
+  --success: #00b26b;
+  --success-soft: #e5f7ef;
   --warning: #c77700;
-  --warning-soft: #fdf3e3;
-  --danger: #e0483d;
-  --danger-soft: #fdeceb;
+  --warning-soft: #fff5e5;
+  --danger: #f04452;
+  --danger-soft: #ffeced;
 
-  --radius: 14px;
-  --radius-sm: 10px;
-  --shadow: 0 1px 2px rgba(16, 20, 26, 0.04), 0 8px 24px rgba(16, 20, 26, 0.06);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow: 0 1px 3px rgba(0, 23, 51, 0.04);
+  --shadow-lift: 0 4px 20px rgba(0, 23, 51, 0.08);
 
-  --max: 1080px;
+  --max: 1120px;
+  /* 폼은 한 줄이 너무 길면 읽기 어려워 따로 제한한다 */
+  --max-form: 680px;
+  --bottom-bar: 84px;
 }
 
 * {
@@ -43,12 +49,13 @@ body {
 }
 
 body {
-  background: var(--bg);
+  background: var(--page);
   color: var(--ink);
   font-family: Pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
     "Malgun Gothic", "맑은 고딕", "Noto Sans KR", Roboto, "Helvetica Neue", sans-serif;
   font-size: 16px;
   line-height: 1.6;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   word-break: keep-all;
 }
@@ -77,6 +84,26 @@ p {
   max-width: var(--max);
   margin: 0 auto;
   padding: 0 20px;
+}
+
+/* 넓은 화면에서는 본문과 옆 패널을 좌우로 나눈다.
+   좁은 화면에서는 그대로 위아래로 쌓인다. */
+.split {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .split {
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+  }
+
+  /* 옆 패널은 스크롤해도 따라온다 */
+  .split-aside {
+    position: sticky;
+    top: 76px;
+  }
 }
 
 .page {
@@ -117,9 +144,9 @@ p {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--line);
+  background: rgba(242, 244, 246, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: none;
 }
 
 .header-inner {
@@ -220,11 +247,19 @@ p {
   font-size: 13px;
 }
 
-/* 숫자가 주인공 */
+/* 숫자가 주인공. 라벨은 작고 흐리게, 숫자는 크고 진하게. */
 .figure {
-  font-size: clamp(30px, 6vw, 40px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-size: clamp(28px, 7vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.figure-lg {
+  font-size: clamp(34px, 9vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.05em;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
@@ -241,30 +276,39 @@ p {
 
 /* ---------------- 카드 ---------------- */
 
+/* 경계선을 지우고 흰 면과 회색 배경의 대비로만 영역을 나눈다 */
 .card {
   background: var(--bg);
-  border: 1px solid var(--line);
+  border: none;
   border-radius: var(--radius);
   padding: 20px;
+  box-shadow: var(--shadow);
 }
 
 .card-soft {
   background: var(--surface);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  padding: 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 16px;
 }
 
 .card-brand {
   background: var(--brand-soft);
-  border: 1px solid #d3e2fb;
+  border: none;
   border-radius: var(--radius);
   padding: 20px;
 }
 
+.card-link {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
 .card-link:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lift);
+}
+
+.card-link:active {
+  transform: scale(0.99);
 }
 
 .grid {
@@ -295,12 +339,13 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 5px 11px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   line-height: 1.4;
+  letter-spacing: -0.02em;
 }
 
 .badge[data-tone="neutral"] { background: var(--surface-2); color: var(--ink-2); }
@@ -316,19 +361,24 @@ p {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 18px;
+  padding: 13px 18px;
   border-radius: var(--radius-sm);
-  border: 1px solid transparent;
+  border: none;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+  transition: background 0.12s ease, opacity 0.12s ease, transform 0.08s ease;
   white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
+.btn:not(:disabled):active { transform: scale(0.98); }
+
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 1;
   cursor: not-allowed;
+  background: var(--surface-2);
+  color: var(--ink-3);
 }
 
 .btn-primary {
@@ -341,7 +391,6 @@ p {
 .btn-secondary {
   background: var(--surface);
   color: var(--ink);
-  border-color: var(--line);
 }
 
 .btn-secondary:not(:disabled):hover { background: var(--surface-2); }
@@ -349,7 +398,7 @@ p {
 .btn-ghost {
   background: transparent;
   color: var(--ink-2);
-  border-color: var(--line);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 
 .btn-danger {
@@ -366,8 +415,18 @@ p {
 }
 
 .btn-block { width: 100%; }
-.btn-lg { padding: 15px 24px; font-size: 16px; }
-.btn-sm { padding: 8px 12px; font-size: 14px; }
+.btn-lg { padding: 16px 24px; font-size: 16.5px; border-radius: 14px; }
+.btn-sm { padding: 9px 14px; font-size: 14px; border-radius: 10px; }
+
+/* 토스처럼 주요 행동은 화면 하단에 고정한다 */
+.bottom-bar {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, var(--page) 72%, rgba(242, 244, 246, 0));
+  padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
+  margin-top: 8px;
+  z-index: 30;
+}
 
 /* ---------------- 폼 ---------------- */
 
@@ -381,25 +440,32 @@ p {
 .textarea,
 .select {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--line-strong);
+  padding: 15px 16px;
+  border: none;
   border-radius: var(--radius-sm);
-  background: var(--bg);
+  background: var(--surface);
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16px;
   font-family: inherit;
   outline: none;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--ink-3);
 }
 
 .input:focus,
 .textarea:focus,
 .select:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-soft);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px var(--brand);
 }
 
 .input[data-invalid="true"] {
-  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1.5px var(--danger);
 }
 
 .textarea {
@@ -422,16 +488,16 @@ p {
 
 .notice {
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  font-size: 14px;
+  padding: 15px 16px;
+  font-size: 14.5px;
   line-height: 1.6;
-  border: 1px solid transparent;
+  border: none;
 }
 
-.notice[data-tone="info"] { background: var(--brand-soft); color: var(--brand-ink); border-color: #d3e2fb; }
-.notice[data-tone="warning"] { background: var(--warning-soft); color: #8a5300; border-color: #f5e0bd; }
-.notice[data-tone="danger"] { background: var(--danger-soft); color: #a8322a; border-color: #f6cdc9; }
-.notice[data-tone="neutral"] { background: var(--surface); color: var(--ink-2); border-color: var(--line); }
+.notice[data-tone="info"] { background: var(--brand-soft); color: var(--brand-ink); }
+.notice[data-tone="warning"] { background: var(--warning-soft); color: #8a5300; }
+.notice[data-tone="danger"] { background: var(--danger-soft); color: #c9313c; }
+.notice[data-tone="neutral"] { background: var(--surface); color: var(--ink-2); }
 
 /* ---------------- 타임라인 ---------------- */
 
@@ -523,19 +589,38 @@ p {
 
 .modal {
   background: var(--bg);
-  border-radius: 18px 18px 0 0;
+  border-radius: 20px 20px 0 0;
   width: 100%;
   max-width: 460px;
-  padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+  padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
   max-height: 88vh;
   overflow-y: auto;
+  animation: sheet-up 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* 바텀시트 손잡이. 아래에서 올라온 판이라는 것을 알려준다. */
+.modal::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  margin: 0 auto 16px;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(24px); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @media (min-width: 641px) {
   .modal {
-    border-radius: 18px;
+    border-radius: 20px;
     padding: 24px;
   }
+
+  .modal::before { display: none; }
 }
 
 /* ---------------- 토스트 ---------------- */
@@ -572,13 +657,13 @@ p {
 
 .kv {
   display: grid;
-  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
-  gap: 8px 16px;
-  font-size: 14px;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+  gap: 14px 16px;
+  font-size: 15px;
 }
 
-.kv dt { color: var(--ink-3); }
-.kv dd { margin: 0; text-align: right; font-weight: 500; }
+.kv dt { color: var(--ink-3); font-weight: 500; }
+.kv dd { margin: 0; text-align: right; font-weight: 600; color: var(--ink); }
 
 .scroll-x {
   overflow-x: auto;

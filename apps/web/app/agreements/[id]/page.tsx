@@ -118,33 +118,10 @@ function Detail({ id }: { id: bigint }) {
       <FundBanner id={id} detail={detail} />
 
       <section className="card stack stack-16">
-        <div className="row-between wrap" style={{ alignItems: "flex-start" }}>
-          <div className="stack stack-4">
-            <span className="label">지금 잠겨 있는 금액</span>
-            <Amount value={escrowBalance} size="lg" />
-          </div>
-          <div className="right stack stack-8">
-            <div className="stack stack-4">
-              <span className="label">총 계약금</span>
-              <span className="num" style={{ fontWeight: 700 }}>
-                {formatMkrwWithUnit(agreement.totalFunded > 0n ? agreement.totalFunded : agreement.originalAmount)}
-              </span>
-            </div>
-            <div className="stack stack-4">
-              <span className="label">지급 완료</span>
-              <span className="num" style={{ fontWeight: 700, color: "var(--success)" }}>
-                {formatMkrwWithUnit(agreement.totalReleased)}
-              </span>
-            </div>
-            {agreement.totalRefunded > 0n && (
-              <div className="stack stack-4">
-                <span className="label">고객 환불</span>
-                <span className="num" style={{ fontWeight: 700 }}>
-                  {formatMkrwWithUnit(agreement.totalRefunded)}
-                </span>
-              </div>
-            )}
-          </div>
+        {/* 이 화면에서 가장 중요한 숫자 하나를 맨 위에 크게 둔다 */}
+        <div className="stack stack-4">
+          <span className="label">지금 잠겨 있는 금액</span>
+          <Amount value={escrowBalance} size="xl" />
         </div>
 
         <div className="bar">
@@ -158,6 +135,19 @@ function Detail({ id }: { id: bigint }) {
             }}
           />
         </div>
+
+        <dl className="kv">
+          <dt>총 계약금</dt>
+          <dd>{formatMkrwWithUnit(agreement.totalFunded > 0n ? agreement.totalFunded : agreement.originalAmount)}</dd>
+          <dt>지급 완료</dt>
+          <dd style={{ color: "var(--success)" }}>{formatMkrwWithUnit(agreement.totalReleased)}</dd>
+          {agreement.totalRefunded > 0n && (
+            <>
+              <dt>고객 환불</dt>
+              <dd>{formatMkrwWithUnit(agreement.totalRefunded)}</dd>
+            </>
+          )}
+        </dl>
 
         <hr className="divider" />
 
@@ -191,7 +181,8 @@ function Detail({ id }: { id: bigint }) {
         </a>
       </section>
 
-      <section className="stack stack-16">
+      <div className="split">
+        <section className="stack stack-16">
         <h2 className="section-title">작업 단계</h2>
         <div className="timeline">
           {milestones.map((milestone, index) => {
@@ -267,19 +258,22 @@ function Detail({ id }: { id: bigint }) {
             );
           })}
         </div>
-      </section>
+        </section>
 
-      <PaymentPanel agreementId={id} agreement={agreement} metadata={metadata} role={role} />
+        <aside className="split-aside stack stack-16">
+          <PaymentPanel agreementId={id} agreement={agreement} metadata={metadata} role={role} />
 
-      <ChangeOrderPanel agreementId={id} agreement={agreement} changeOrders={changeOrders} role={role} />
+          <ChangeOrderPanel agreementId={id} agreement={agreement} changeOrders={changeOrders} role={role} />
 
-      <CancellationPanel
-        agreementId={id}
-        agreement={agreement}
-        role={role}
-        escrowBalance={escrowBalance}
-        cancelProposer={detail.cancelProposer}
-      />
+          <CancellationPanel
+            agreementId={id}
+            agreement={agreement}
+            role={role}
+            escrowBalance={escrowBalance}
+            cancelProposer={detail.cancelProposer}
+          />
+        </aside>
+      </div>
 
       <section className="card stack stack-12">
         <h3 className="section-title">활동 내역</h3>

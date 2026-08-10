@@ -72,7 +72,7 @@ function draftFromTemplate(template: MilestoneTemplate, previous?: Draft): Draft
 export default function NewAgreementPage() {
   return (
     <div className="shell page">
-      <div className="stack stack-24" style={{ maxWidth: 640 }}>
+      <div className="stack stack-24" style={{ maxWidth: "var(--max-form)" }}>
         <SetupGuard>
           <Wizard />
         </SetupGuard>
@@ -291,14 +291,16 @@ function Wizard() {
 
           <ErrorList errors={step1Errors} />
 
-          <button
-            type="button"
-            className="btn btn-primary btn-lg btn-block"
-            disabled={step1Errors.length > 0}
-            onClick={() => setStep(2)}
-          >
-            다음
-          </button>
+          <div className="bottom-bar">
+            <button
+              type="button"
+              className="btn btn-primary btn-lg btn-block"
+              disabled={step1Errors.length > 0}
+              onClick={() => setStep(2)}
+            >
+              다음
+            </button>
+          </div>
         </section>
       )}
 
@@ -437,8 +439,8 @@ function Wizard() {
 
           <ErrorList errors={step2Errors} />
 
-          <div className="row" style={{ gap: 8 }}>
-            <button type="button" className="btn btn-secondary btn-lg grow" onClick={() => setStep(1)}>
+          <div className="bottom-bar row" style={{ gap: 8 }}>
+            <button type="button" className="btn btn-secondary btn-lg" onClick={() => setStep(1)}>
               이전
             </button>
             <button
@@ -509,8 +511,8 @@ function Wizard() {
 
           <TestnetBanner />
 
-          <div className="row" style={{ gap: 8 }}>
-            <button type="button" className="btn btn-secondary btn-lg grow" onClick={() => setStep(2)}>
+          <div className="bottom-bar row" style={{ gap: 8 }}>
+            <button type="button" className="btn btn-secondary btn-lg" onClick={() => setStep(2)}>
               이전
             </button>
             <button type="button" className="btn btn-primary btn-lg grow" onClick={() => setStep(4)}>
@@ -547,10 +549,10 @@ function Wizard() {
             </div>
           )}
 
-          <div className="row" style={{ gap: 8 }}>
+          <div className="bottom-bar row" style={{ gap: 8 }}>
             <button
               type="button"
-              className="btn btn-secondary btn-lg grow"
+              className="btn btn-secondary btn-lg"
               disabled={isPending}
               onClick={() => setStep(3)}
             >
