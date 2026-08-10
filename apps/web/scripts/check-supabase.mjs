@@ -27,6 +27,24 @@ if (tableError) {
   console.log("   → 이미 실행했다면 다음 한 줄을 더 실행하세요: NOTIFY pgrst, 'reload schema';");
 } else {
   console.log(`✅ 테이블 evidence_files 확인 (조회 가능, 표본 ${rows?.length ?? 0}건)`);
+
+  const { data: all } = await supabase
+    .from("evidence_files")
+    .select("agreement_id, milestone_index, file_name, size_bytes, created_at")
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (all?.length) {
+    console.log("   최근 업로드:");
+    for (const row of all) {
+      const kb = row.size_bytes ? `${Math.round(row.size_bytes / 1024)}KB` : "-";
+      console.log(
+        `   · 계약 #${row.agreement_id} ${Number(row.milestone_index) + 1}단계 | ${row.file_name} (${kb})`,
+      );
+    }
+  } else {
+    console.log("   아직 올라온 파일이 없습니다.");
+  }
 }
 
 const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();

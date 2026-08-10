@@ -5,7 +5,9 @@
 import { readFileSync } from "node:fs";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 
-const BASE = "http://localhost:3120";
+// 기본은 로컬. 배포본을 검사하려면 주소를 인자로 준다.
+//   node scripts/check-evidence-auth.mjs https://giwa-trust-escrow-web.vercel.app
+const BASE = process.argv[2] ?? "http://localhost:3120";
 const ESCROW = "0x649050b15a61f3690c8a07857203e6f1ec72c3a5";
 const CHAIN = 91342;
 
