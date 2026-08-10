@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Header, MobileNav } from "@/components/Header";
+import { StarterFunds } from "@/components/StarterFunds";
 
 export const metadata: Metadata = {
   title: "GIWA Trust Escrow — 단계별 지급 에스크로",
@@ -21,6 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <Header />
+          <div className="shell" style={{ paddingTop: 12 }}>
+            <StarterFunds />
+          </div>
           <main>{children}</main>
           <MobileNav />
         </Providers>
