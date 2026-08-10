@@ -1,7 +1,15 @@
 packages:
   - "apps/*"
   - "packages/*"
+# 설치 스크립트 실행을 허용할 패키지. 공급망 공격의 통로가 될 수 있어
+# 꼭 필요한 것만 켠다.
+# 아래 넷은 Privy 가 끌어온 선택적 네이티브 가속 모듈이라 거부해도
+# 자바스크립트 구현으로 동작한다.
 allowBuilds:
+  '@reown/appkit': false
+  bufferutil: false
+  keccak: false
+  utf-8-validate: false
   esbuild: true
   sharp: true
 minimumReleaseAgeExclude:
@@ -13,3 +21,11 @@ minimumReleaseAgeExclude:
 # postcss 가 깨진다. ">=3.3.17" 로 두면 6.x 가 설치되어 빌드가 실패한다.
 overrides:
   nanoid: "^3.3.17"
+  # Privy 가 끌어온 axios·ws 의 알려진 취약점을 패치 버전으로 올린다.
+  # 둘 다 같은 메이저 안에서의 상향이라 호환성 위험이 없다.
+  #
+  # uuid 는 일부러 두었다. 패치가 11.x 인데 MetaMask SDK 가 쓰는 8.x/9.x 에서
+  # 메이저를 두세 단계 건너뛰어야 하고, 해당 취약점은 v3/v5/v6 에 buf 인자를
+  # 줄 때만 발생한다. SDK 는 v4 만 쓰므로 도달하지 않는다.
+  axios: "^1.19.0"
+  ws: "^8.21.3"

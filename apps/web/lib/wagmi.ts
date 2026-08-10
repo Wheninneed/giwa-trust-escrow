@@ -1,14 +1,16 @@
-import { createConfig, http } from "wagmi";
-import { injected } from "wagmi/connectors";
+import { http } from "wagmi";
+import { createConfig } from "@privy-io/wagmi";
 import { giwaSepolia } from "shared";
 
 /**
- * MVP 는 일반 EVM 지갑(메타마스크 등)만으로 동작해야 한다.
- * WalletConnect 는 프로젝트 ID 가 있을 때만 선택적으로 붙인다.
+ * Privy 의 wagmi 어댑터로 config 를 만든다.
+ *
+ * 구글로 로그인하면 Privy 가 임베디드 지갑을 만들어 주고, 그 지갑이 여기
+ * 커넥터로 들어온다. 기존에 쓰던 메타마스크·OKX 같은 설치형 지갑도 그대로
+ * 잡히므로, 계약을 호출하는 코드는 어느 쪽인지 몰라도 된다.
  */
 export const wagmiConfig = createConfig({
   chains: [giwaSepolia],
-  connectors: [injected()],
   transports: {
     [giwaSepolia.id]: http(process.env.NEXT_PUBLIC_GIWA_RPC_URL ?? "https://sepolia-rpc.giwa.io", {
       // 공개 RPC 에는 rate limit 이 있다. 무한 대기 대신 빠르게 실패시키고 재시도한다.
