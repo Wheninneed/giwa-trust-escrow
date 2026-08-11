@@ -79,7 +79,7 @@ flowchart TB
         web --- login
     end
 
-    subgraph server["서버 라우트 (Next.js)"]
+    subgraph server["Next.js 서버 라우트"]
         access["증빙 접근 제어<br/>지갑 서명 검증 후 온체인 역할 확인"]
         starter["시작 지원금<br/>가스비 · 테스트 토큰 지급"]
     end
@@ -97,8 +97,8 @@ flowchart TB
     web --> access
     web --> starter
     access -- "당사자 확인" --> escrow
-    access -- "짧은 수명의 열람 URL" --> store
-    starter --> chain
+    access -- "열람 URL 발급" --> store
+    starter -- "가스비 · 테스트 토큰" --> token
 
     style chain fill:#e8f3ff,stroke:#3182f6
     style browser fill:#f2f4f6,stroke:#d1d6db
